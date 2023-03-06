@@ -1,0 +1,35 @@
+version: '3'
+services:
+  db:
+    image: mysql:8.0.29
+    platform: linux/x86_64
+    volumes:
+      - db-volume:/var/lib/mysql
+      - ./mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+  app:
+    build: .
+    # command: rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'
+    command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle exec rails s"
+    volumes:
+      - .:/myapp
+      - public:/myapp/public
+      - tmp:/myapp/tmp
+    depends_on:
+      - db
+  web:
+    build: ./nginx
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - public:/myapp/public
+      - tmp:/myapp/tmp
+    ports:
+      - 80:80
+    depends_on:
+      - app
+volumes:
+  db-volume:
+  public:
+  tmp:
